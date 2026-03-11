@@ -1,3 +1,24 @@
+// ################################################################################################
+// Implementation of a generic dynamic array in C. Originally was inspired by a similar structure seen in Tsoding's video (https://www.youtube.com/watch?v=95M6V3mZgrI). 
+// Though this version is based on a macro that generates structs and related functions based on the provided type.
+//
+//     HOW TO USE ??? - Very simply actually
+// Let's say you need an dynamic array of Integers, then you call the implementation macro like this:
+// DARR_IMPLEMENT(int) - this will generate the struct int_darr and all the related functions that you can
+// analize yourself in the below. 
+// Use example:
+//
+// .... (other code)
+// DARR_IMPLEMENT(int)
+// int main() {
+//     int_darr ints;
+//     int_darr_init(&ints);
+//     int_darr_push(&ints, 69);
+//     printf("%d", int_darr_pop(&ints));
+//     int_darr_free(&ints);
+//     return 0;
+// }
+// ################################################################################################
 #ifndef DARR_H
 #define DARR_H
 
@@ -65,5 +86,6 @@ static void ARR_STRUCT_NAME##_remove(ARR_STRUCT_NAME* arr, size_t index){       
 }
 
 #define DARR_IMPLEMENT(TYPE) DARR_IMPLEMENT_EXPLICIT(TYPE, TYPE##_darr)
+
 
 #endif
