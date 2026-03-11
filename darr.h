@@ -85,7 +85,7 @@ static void ARR_STRUCT_NAME##_push(ARR_STRUCT_NAME* arr, TYPE value) {          
                                                                                                    \
 static void ARR_STRUCT_NAME##_insert(ARR_STRUCT_NAME* arr, TYPE value, size_t index) {             \
     assert(arr != NULL && "A valid array is expected");                                            \
-    assert(index >= 0 && index <= arr->size && "index out of range");                              \
+    assert(index <= arr->size && "index out of range");                                            \
     if (arr->size >= arr->capacity) {                                                              \
         size_t new_capacity = arr->capacity == 0 ? 4 : arr->capacity * 2;                          \
         TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                    \
@@ -101,13 +101,13 @@ static void ARR_STRUCT_NAME##_insert(ARR_STRUCT_NAME* arr, TYPE value, size_t in
                                                                                                    \
 static TYPE ARR_STRUCT_NAME##_pop(ARR_STRUCT_NAME* arr) {                                          \
     assert(arr != NULL && "A valid array is expected");                                            \
-    assert(arr->size >= 0 && "An array with positive size is expected");                           \
+    assert(arr->size > 0 && "An array with positive size is expected");                            \
     return arr->elements[--arr->size];                                                             \
 }                                                                                                  \
                                                                                                    \
 static void ARR_STRUCT_NAME##_remove(ARR_STRUCT_NAME* arr, size_t index){                          \
     assert(arr != NULL && "A valid array is expected");                                            \
-    assert(index >= 0 && index <= arr->size && "index out of range");                              \
+    assert(index <= arr->size && "index out of range");                                            \
     arr->size--;                                                                                   \
     for(size_t i = index; i < arr->size; i++) {                                                    \
         arr->elements[i] = arr->elements[i+1];                                                     \
@@ -117,7 +117,7 @@ static void ARR_STRUCT_NAME##_remove(ARR_STRUCT_NAME* arr, size_t index){       
 static void ARR_STRUCT_NAME##_shrink(ARR_STRUCT_NAME* arr){                                        \
     assert(arr != NULL && "A valid array is expected");                                            \
     size_t new_capacity = arr->capacity/4;                                                         \
-    if(new_capacity = 0) return;                                                                   \
+    if(new_capacity == 0) return;                                                                  \
     if(arr->size < new_capacity) {                                                                 \
         TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                    \
         if (!tmp) return;                                                                          \
