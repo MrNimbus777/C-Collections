@@ -30,6 +30,7 @@
 #define DARR_H
 
 #include <stdlib.h>
+#include <assert.h>
 
 // TYPE: for pointers provide a wrapping type (e.g. char* -> typedef char* my_string)
 #define DARR_IMPLEMENT_EXPLICIT(TYPE, ARR_STRUCT_NAME)                                             \
