@@ -136,7 +136,7 @@ static void ARR_STRUCT_NAME##_shrink(ARR_STRUCT_NAME* arr){                     
                                                                                                     \
 static void ARR_STRUCT_NAME##_resize(ARR_STRUCT_NAME* arr, size_t new_capacity){                    \
     assert(arr != NULL && "A valid array is expected");                                             \
-    assert(new_capacity > arr->size && "new_capacity cannot be smaller than actual size")           \
+    assert(new_capacity > arr->size && "new_capacity cannot be smaller than actual size");          \
     TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                         \
     if (!tmp) return;                                                                               \
     arr->elements = tmp;                                                                            \
