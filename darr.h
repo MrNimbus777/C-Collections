@@ -1,11 +1,16 @@
 // ################################################################################################
-// Implementation of a generic dynamic array in C. Originally was inspired by a similar structure seen in Tsoding's video (https://www.youtube.com/watch?v=95M6V3mZgrI).
-// Though this version is based on a macro that generates structs and related functions based on the provided type.
+// Implementation of a generic dynamic array in C. Originally was inspired by a similar structure 
+// seen in Tsoding's video (https://www.youtube.com/watch?v=95M6V3mZgrI).
+// Though this version is based on a macro that generates structs and related functions based on
+// the provided type.
+// 
+// ??? HOW TO USE ???  - Very simply actually
+// Let's say you need an dynamic array of Integers, then you call the implementation macro like
+// this: 
+// DARR_IMPLEMENT(int) - this will generate the struct int_darr and all the related functions that 
+//                       you can analize yourself in the below. 
+// 
 //
-//     HOW TO USE ??? - Very simply actually
-// Let's say you need an dynamic array of Integers, then you call the implementation macro like this:
-// DARR_IMPLEMENT(int) - this will generate the struct int_darr and all the related functions that you can
-// analize yourself in the below. 
 // Use example:
 //
 // .... (other code)
@@ -20,9 +25,9 @@
 // }
 //
 //
-// !!! IMPORTANT NOTE: performing push might invalidate the previous position of 'elements' pointer. 
-//     This means you should never rely on a previously saved pointer to a certain object, 
-//     only on its index relatively to 'elements' pointer
+// !!! IMPORTANT NOTE: performing push might do a resize action which might invalidate the previous 
+//     position of 'elements' pointer. This means you should never rely on a previously saved
+//     pointer to a certain object, only on its index relatively to 'elements' pointer
 //
 //
 // ################################################################################################
@@ -118,12 +123,21 @@ static void ARR_STRUCT_NAME##_shrink(ARR_STRUCT_NAME* arr){                     
     assert(arr != NULL && "A valid array is expected");                                            \
     size_t new_capacity = arr->capacity/4;                                                         \
     if(new_capacity == 0) return;                                                                  \
-    if(arr->size < new_capacity) {                                                                 \
+    if(arr->size <= new_capacity) {                                                                \
         TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                    \
         if (!tmp) return;                                                                          \
         arr->elements = tmp;                                                                       \
         arr->capacity = new_capacity;                                                              \
     }                                                                                              \
+}                                                                                                  \
+                                                                                                   \
+static void ARR_STRUCT_NAME##_resize(ARR_STRUCT_NAME* arr, size_t new_capacity){                   \
+    assert(arr != NULL && "A valid array is expected");                                            \
+    assert(new_capacity > arr->size && "new_capacity cannot be smaller than actual size")          \
+    TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                        \
+    if (!tmp) return;                                                                              \
+    arr->elements = tmp;                                                                           \
+    arr->capacity = new_capacity;                                                                  \
 }                                                                                                  \
                                                                                                    \
 static void ARR_STRUCT_NAME##_clear(ARR_STRUCT_NAME* arr){                                         \
