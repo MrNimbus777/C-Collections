@@ -43,10 +43,10 @@ int main() {
     return 0;
 }
 ```
->> ## IMPORTANT NOTE: 
->>   performing push might do a resize action which might invalidate the previous 
->>   position of 'elements' pointer. This means you should never rely on a previously saved
->>   pointer to a certain object, only on its index relatively to 'elements' pointer
+> ### IMPORTANT NOTE: 
+>   performing push might do a resize action which might invalidate the previous 
+>   position of 'elements' pointer. This means you should never rely on a previously saved
+>   pointer to a certain object, only on its index relatively to 'elements' pointer
 
 # [llist.h](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h) (Single Linked List)
 
