@@ -8,9 +8,7 @@ to generate type-specific structures and functions.
 # [darr.h](https://github.com/MrNimbus777/C-Collections/blob/main/darr.h) (Dynamic Array)
 
 Implementation of a generic dynamic array in C. Originally inspired by a
-similar structure seen in Tsoding's video:
-
-https://www.youtube.com/watch?v=95M6V3mZgrI
+similar structure seen in Tsoding's video: <a href="https://www.youtube.com/watch?v=95M6V3mZgrI" target="_blank">https://www.youtube.com/watch?v=95M6V3mZgrI</a>
 
 This version is based on a macro that generates the struct and related
 functions for the provided type.
