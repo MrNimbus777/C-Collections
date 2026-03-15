@@ -1,3 +1,27 @@
+// ####################################################################################################################
+// Implementation of a generic single linked list in C using a macro for creating the set of function tied to a TYPE.
+//
+// ??? HOW TO USE ???  - Very simply actually
+// Let's say you need an linked list of Integers, then you call the implementation macro like
+// this: 
+// LLIST_IMPLEMENT(int) - this will generate the struct int_llist and all the related functions that 
+//                       you can analize yourself in the below.
+// 
+//
+// Use example:
+//
+// .... (other code)
+// LLIST_IMPLEMENT(int)
+// int main() {
+//     int_llist list;
+//     int_llist_init(&list);
+//     int_llist_add(&ints, 69);
+//     printf("%d", int_llist_pop(&ints));
+//     int_llist_clear(&ints);  // very important to clear the elements to prevent memory leaks!
+//     return 0;
+// }
+//
+// ####################################################################################################################
 #ifndef LLIST_H
 #define LLIST_H
 
@@ -5,16 +29,22 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#define LLIST_FOREACH(list_ptr, node_ptr) \
+    for (node_ptr = (list_ptr)->head; \
+         node_ptr != NULL; \
+         node_ptr = (node_ptr)->next)
+
 // This macro is used to DECLARE the "is_equal" function related to TYPE. You must lately provide an DEFINITION (block of code) for this function, in order to use the linked list!
 #define DECLARE_IS_EQUAL_FOR_TYPE(TYPE) bool is_equal_##TYPE (TYPE t1, TYPE t2);
 
 // TYPE: for pointers provide a wrapping type (e.g. char* -> typedef char* my_string)
 #define LLIST_IMPLEMENT_EXPLICIT(TYPE, LIST_STRUCTURE_NAME)                                                           \
                                                                                                                       \
-typedef struct {                                                                                                      \
+struct LIST_STRUCTURE_NAME##_node {                                                                                   \
     struct LIST_STRUCTURE_NAME##_node* next;                                                                          \
     TYPE value;                                                                                                       \
-} LIST_STRUCTURE_NAME##_node;                                                                                         \
+};                                                                                                                    \
+typedef struct LIST_STRUCTURE_NAME##_node LIST_STRUCTURE_NAME##_node;                                                 \
                                                                                                                       \
 typedef struct {                                                                                                      \
     LIST_STRUCTURE_NAME##_node* head;                                                                                 \
@@ -165,7 +195,7 @@ static TYPE LIST_STRUCTURE_NAME##_at(LIST_STRUCTURE_NAME* list, size_t index){  
     return p->value;                                                                                                  \
 }                                                                                                                     \
                                                                                                                       \
-static LIST_STRUCTURE_NAME##_node* LIST_STRUCTURE_NAME##_find(LIST_STRUCTURE_NAME* list, TYPE value){                 \
+static LIST_STRUCTURE_NAME##_node* LIST_STRUCTURE_NAME##_find(LIST_STRUCTURE_NAME* list, TYPE element){               \
     assert(list != NULL && "A valid list expected");                                                                  \
     if(list->size == 0) return NULL;                                                                                  \
     LIST_STRUCTURE_NAME##_node* p = list->head;                                                                       \
@@ -201,6 +231,6 @@ static void LIST_STRUCTURE_NAME##_clone(LIST_STRUCTURE_NAME* list1, LIST_STRUCTU
 }
 
 // TYPE: for pointers provide a wrapping type (e.g. char* -> typedef char* my_string)
-#define LLIST_IMPLEMENT(TYPE) LLIST_IMPLEMENT_EXPLICIT(TYPE, llist_##TYPE)
+#define LLIST_IMPLEMENT(TYPE) LLIST_IMPLEMENT_EXPLICIT(TYPE, TYPE##_llist)
 
 #endif // !LLIST_H
