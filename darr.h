@@ -20,7 +20,7 @@
 //     int_darr_init(&ints);
 //     int_darr_push(&ints, 69);
 //     printf("%d", int_darr_pop(&ints));
-//     int_darr_free(&ints);
+//     int_darr_free(&ints); // very important to free the array to prevent memory leaks!
 //     return 0;
 // }
 //
