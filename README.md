@@ -44,7 +44,7 @@ int main() {
 }
 ```
 > ### IMPORTANT NOTE: 
->   performing push might do a resize action which might invalidate the previous 
+>   performing _#_push_ might do a resize action which might invalidate the previous 
 >   position of 'elements' pointer. This means you should never rely on a previously saved
 >   pointer to a certain object, only on its index relatively to 'elements' pointer
 
