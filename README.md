@@ -57,7 +57,7 @@ Implementation of a generic single linked list in C using a macro for creating t
 If you need a linked list of integers, call the implementation macro: <br>
 `LLIST_IMPLEMENT(int)` <br>
 _(or `LLIST_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_ <br>
-This will generate the struct int_llist and all the related functions that you can analize yourself in the below.
+If you want to get into details analyze carefully the [sourcode](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h).
 
 ## Example
 ```
