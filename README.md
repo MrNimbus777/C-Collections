@@ -19,7 +19,8 @@ functions for the provided type.
 
 Suppose you need a dynamic array of integers. (Why would you use lib if you didn't? ._.)
 Call the implementation macro like this: 
-`DARR_IMPLEMENT(int)` _(or `DARR_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_
+`DARR_IMPLEMENT(int)` 
+_(or `DARR_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_
 This will generate the int_darr structure and all related functions for that type
 If you want to get into details analyze carefully the [sourcode](https://github.com/MrNimbus777/C-Collections/blob/main/darr.h).
 
@@ -54,7 +55,8 @@ Implementation of a generic single linked list in C using a macro for creating t
 
 ## How to use
 If you need a linked list of integers, call the implementation macro:
-`LLIST_IMPLEMENT(int)` _(or `LLIST_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_
+`LLIST_IMPLEMENT(int)` 
+_(or `LLIST_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_
 This will generate the struct int_llist and all the related functions that you can analize yourself in the below.
 
 ## Example
