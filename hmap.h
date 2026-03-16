@@ -49,10 +49,10 @@
 #define HMAP_H
 
 #include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#include <string.h> // needed for mempcpy
+#include <stdint.h> 
 #include <stdbool.h>
-#include <limits.h>
+#include <limits.h> // needed for CHAR_BIT
 #include <assert.h>
 
 typedef unsigned char byte;
