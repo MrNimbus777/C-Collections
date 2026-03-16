@@ -14,13 +14,12 @@
 // Use example:
 //
 // .... (other code)
-// DARR_IMPLEMENT(int)
 // int main() {
 //     int_darr ints;
 //     int_darr_init(&ints);
 //     int_darr_push(&ints, 69);
 //     printf("%d", int_darr_pop(&ints));
-//     int_darr_free(&ints); // very important to free the array to prevent memory leaks!
+//     int_darr_free(&ints); // Don't forget to free it when it is not needed anymore.
 //     return 0;
 // }
 //
@@ -154,7 +153,7 @@ static void ARR_STRUCT_NAME##_clone(ARR_STRUCT_NAME* arr1, ARR_STRUCT_NAME* arr2
     assert(arr2 != NULL && "A valid array is expected");                                           \
     ARR_STRUCT_NAME##_init_with_capacity(arr2, arr1->capacity);                                    \
     arr2->size = arr1->size;                                                                       \
-    mempcpy(arr2->elements, arr1->elements, arr1->size);                                           \
+    mempcpy(arr2->elements, arr1->elements, arr1->size * sizeof(TYPE));                            \
 }                                                                                                  \
 
 
