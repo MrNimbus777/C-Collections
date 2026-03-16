@@ -1,23 +1,24 @@
 // ####################################################################################################################
-// Implementation of a generic single linked list in C using a macro for creating the set of function tied to a TYPE.
+// Implementation of a generic single linked list in C using a macro for creating the set of functions tied to a TYPE.
 //
 // ??? HOW TO USE ???  - Very simply actually
 // Let's say you need an linked list of Integers, then you call the implementation macro like
-// this: 
+// this:
 // LLIST_IMPLEMENT(int) - this will generate the struct int_llist and all the related functions that 
-//                       you can analize yourself in the below.
-// 
+//                        you can analize yourself in the below. 
+//                        It will also DECLARE the function is_equal_int(int, int). You must provide a 
+//                        definition for it lately:
+// bool is_equal_int(int i1, int i2){ return i1 == i2; }
 //
 // Use example:
 //
 // .... (other code)
-// LLIST_IMPLEMENT(int)
 // int main() {
 //     int_llist list;
 //     int_llist_init(&list);
-//     int_llist_add(&ints, 69);
-//     printf("%d", int_llist_pop(&ints));
-//     int_llist_clear(&ints);  // very important to clear the elements to prevent memory leaks!
+//     int_llist_add(&list, 69);
+//     printf("%d", int_llist_pop(&list));
+//     int_llist_clear(&list);  // very important to clear the elements to prevent memory leaks!
 //     return 0;
 // }
 //
@@ -34,11 +35,10 @@
          node_ptr != NULL; \
          node_ptr = (node_ptr)->next)
 
-// This macro is used to DECLARE the "is_equal" function related to TYPE. You must lately provide an DEFINITION (block of code) for this function, in order to use the linked list!
-#define DECLARE_IS_EQUAL_FOR_TYPE(TYPE) bool is_equal_##TYPE (TYPE t1, TYPE t2);
-
 // TYPE: for pointers provide a wrapping type (e.g. char* -> typedef char* my_string)
 #define LLIST_IMPLEMENT_EXPLICIT(TYPE, LIST_STRUCTURE_NAME)                                                           \
+                                                                                                                      \
+bool is_equal_##TYPE (TYPE t1, TYPE t2);                                                                              \
                                                                                                                       \
 struct LIST_STRUCTURE_NAME##_node {                                                                                   \
     struct LIST_STRUCTURE_NAME##_node* next;                                                                          \
