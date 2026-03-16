@@ -30,13 +30,13 @@ int main() {
     return 0;
 }
 ```
-
+---
 ### [llist.h](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h) (Single Linked List)
 
 Implementation of a generic single linked list in C using a macro for creating the set of function tied to a TYPE.
 
 #### Example
-```
+```c
 #include <stdio.h>
 #include "llist.h"
 
