@@ -5,24 +5,12 @@ to generate type-specific structures and functions.
 
 ---
 
-# [darr.h](https://github.com/MrNimbus777/C-Collections/blob/main/darr.h) (Dynamic Array)
+### [darr.h](https://github.com/MrNimbus777/C-Collections/blob/main/darr.h) (Dynamic Array)
 
 Implementation of a generic dynamic array in C. Originally inspired by a
 similar structure seen in Tsoding's video: <a href="https://www.youtube.com/watch?v=95M6V3mZgrI" target="_blank">https://www.youtube.com/watch?v=95M6V3mZgrI</a>
 
-This version is based on a macro that generates the struct and related
-functions for the provided type.
-
-## How to Use
-
-Suppose you need a dynamic array of integers. (Why would you use lib if you didn't? ._.)<br>
-Call the implementation macro like this: <br>
-`DARR_IMPLEMENT(int)` <br>
-_(or `DARR_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_ <br>
-This will generate the int_darr structure and all related functions for that type.
-If you want to get into details analyze carefully the [sourcode](https://github.com/MrNimbus777/C-Collections/blob/main/darr.h).
-
-## Example
+#### Example
 
 ```c
 #include <stdio.h>
@@ -42,28 +30,18 @@ int main() {
     return 0;
 }
 ```
-> ### IMPORTANT NOTE: 
->   performing _#\_push_ might do a resize action which might invalidate the previous 
->   position of 'elements' pointer. This means you should never rely on a previously saved
->   pointer to a certain object, only on its index relatively to 'elements' pointer
 
-# [llist.h](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h) (Single Linked List)
+### [llist.h](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h) (Single Linked List)
 
 Implementation of a generic single linked list in C using a macro for creating the set of function tied to a TYPE.
 
-## How to use
-If you need a linked list of integers, call the implementation macro: <br>
-`LLIST_IMPLEMENT(int)` <br>
-_(or `LLIST_IMPLEMENT_EXPLICIT(int, ints)` for custom naming.)_ <br>
-This will generate the int_llist structure and all related functions for that type.
-If you want to get into details analyze carefully the [sourcode](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h).
-
-## Example
+#### Example
 ```
 #include <stdio.h>
 #include "llist.h"
 
 LLIST_IMPLEMENT(int)
+bool is_equal_int(int i1, int i2){ return i1 == i2; }
 
 int main() {
     int_llist list;
