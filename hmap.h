@@ -27,7 +27,7 @@
 //     int_to_string_hmap map;
 //     int_to_string_hmap_init(&map);
 //     int_to_string_hmap_put(&map, 69, "Six Nine");
-//     printf("%s", *int_to_string_hmap_get_or_null(&map, 69));
+//     printf("%s\n", *int_to_string_hmap_get_or_null(&map, 69));
 //     int_to_string_hmap_clear(&map);  // very important to clear the elements to prevent memory leaks!
 //     return 0;
 // }
