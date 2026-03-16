@@ -18,7 +18,7 @@
 //     int_darr ints;
 //     int_darr_init(&ints);
 //     int_darr_push(&ints, 69);
-//     printf("%d", int_darr_pop(&ints));
+//     printf("%d\n", int_darr_pop(&ints));
 //     int_darr_free(&ints); // Don't forget to free it when it is not needed anymore.
 //     return 0;
 // }
