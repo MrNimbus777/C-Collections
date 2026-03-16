@@ -17,7 +17,7 @@
 //     int_llist list;
 //     int_llist_init(&list);
 //     int_llist_add(&list, 69);
-//     printf("%d", int_llist_pop(&list));
+//     printf("%d\n", int_llist_pop(&list));
 //     int_llist_clear(&list);  // very important to clear the elements to prevent memory leaks!
 //     return 0;
 // }
