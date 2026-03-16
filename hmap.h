@@ -19,6 +19,9 @@
 // .... (other code)
 // typedef char* string;
 // DECLARE_FUNCTIONS_FOR_KEY_T(int)
+// bool is_equal_int(int i1, int i2){ return i1 == i2; }
+// uint64_t hash_int(int i){ return fmix64(i); }
+// 
 // HMAP_IMPLEMENT(int, string)
 // int main() {
 //     int_to_string_hmap map;
