@@ -27,7 +27,7 @@
 //     int_to_string_hmap map;
 //     int_to_string_hmap_init(&map);
 //     int_to_string_hmap_put(&map, 69, "Six Nine");
-//     printf("%s\n", *int_to_string_hmap_get_or_null(&map, 69));
+//     printf("%s", *int_to_string_hmap_get_or_null(&map, 69));
 //     int_to_string_hmap_clear(&map);  // very important to clear the elements to prevent memory leaks!
 //     return 0;
 // }
@@ -216,10 +216,10 @@ static void MAP_STRUCT_NAME##_resize(MAP_STRUCT_NAME* map, size_t new_capacity) 
     MAP_STRUCT_NAME##_entry* old_elements = map->elements;                                                        \
     byte* old_bitmap = map->bitmap;                                                                               \
                                                                                                                   \
-    map->elements = malloc(new_capacity * sizeof(MAP_STRUCT_NAME##_entry));                                       \
+    map->elements = (MAP_STRUCT_NAME##_entry*)malloc(new_capacity * sizeof(MAP_STRUCT_NAME##_entry));             \
     if (!map->elements) exit(EXIT_FAILURE);                                                                       \
                                                                                                                   \
-    map->bitmap = calloc((new_capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP, sizeof(byte));                       \
+    map->bitmap = (byte*)calloc((new_capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP, sizeof(byte));                \
     if (!map->bitmap) exit(EXIT_FAILURE);                                                                         \
                                                                                                                   \
     map->capacity = new_capacity;                                                                                 \
@@ -368,9 +368,20 @@ static void MAP_STRUCT_NAME##_clear(MAP_STRUCT_NAME* map) {                     
     memset(map->bitmap, 0, (map->capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP);                                  \
 }                                                                                                                 \
                                                                                                                   \
-static void MAP_STRUCT_NAME##_clone(MAP_STRUCT_NAME* map1, MAP_STRUCT_NAME* map2) {                               \
+static MAP_STRUCT_NAME MAP_STRUCT_NAME##_clone(MAP_STRUCT_NAME* map1, MAP_STRUCT_NAME* map2) {                    \
     assert(map1 != NULL && "A valid map is expected");                                                            \
-    assert(map2 != NULL && "A valid map is expected");                                                            \
+    if(map2 == NULL) {                                                                                            \
+        MAP_STRUCT_NAME map2;                                                                                     \
+        if(map1->size == 0) {                                                                                     \
+            MAP_STRUCT_NAME##_init(map2);                                                                         \
+            return map2;                                                                                          \
+        }                                                                                                         \
+        MAP_STRUCT_NAME##_init_with_capacity(&map2, map1->capacity);                                              \
+        map2.size = map1->size;                                                                                   \
+        mempcpy(map2.bitmap, map1->bitmap, (map1->capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP);                 \
+        mempcpy(map2.elements, map1->elements, map1->capacity * sizeof(MAP_STRUCT_NAME##_entry));                 \
+        return map2;                                                                                              \
+    }                                                                                                             \
     if(map1->size == 0) {                                                                                         \
         MAP_STRUCT_NAME##_init(map2);                                                                             \
         return;                                                                                                   \
@@ -379,6 +390,7 @@ static void MAP_STRUCT_NAME##_clone(MAP_STRUCT_NAME* map1, MAP_STRUCT_NAME* map2
     map2->size = map1->size;                                                                                      \
     mempcpy(map2->bitmap, map1->bitmap, (map1->capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP);                    \
     mempcpy(map2->elements, map1->elements, map1->capacity * sizeof(MAP_STRUCT_NAME##_entry));                    \
+    return *map2;                                                                                                 \
 }                                                                                                                 \
                                                                                                                   \
 static void MAP_STRUCT_NAME##_iterator_init(MAP_STRUCT_NAME##_iterator* it) {                                     \
