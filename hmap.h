@@ -1,5 +1,5 @@
 // ####################################################################################################################
-// Implementation of a generic hash map in C using a macro for creating the set of 
+// Implementation of a generic hash map in C23 using a macro for creating the set of 
 // functions tied to a KET TYPE -> VALUE TYPE.
 //
 // ??? HOW TO USE ???
@@ -73,17 +73,17 @@
 
 // THE SUGARY API:
 
-#define hmap_resize(map_ptr, new_capacity) ((map_ptr)->op->_resize(map_ptr, new_capacity))
-#define hmap_reserve(map_ptr, new_capacity) ((map_ptr)->op->_reserve(map_ptr, new_capacity))
-#define hmap_try_shrink(map_ptr) ((map_ptr)->op->_try_shrink(map_ptr))
-#define hmap_free(map_ptr) ((map_ptr)->op->_free(map_ptr))
-#define hmap_put(map_ptr, key, element) ((map_ptr)->op->_put(map_ptr, key, element))
-#define hmap_get_or_null(map_ptr, key) ((map_ptr)->op->_get_or_null(map_ptr, key))
-#define hmap_remove(map_ptr, key) ((map_ptr)->op->_remove(map_ptr, key))
-#define hmap_contains(map_ptr, key) ((map_ptr)->op->_contains(map_ptr, key))
-#define hmap_clear(map_ptr) ((map_ptr)->op->_clear(map_ptr))
-#define hmap_clone(map_ptr, map_clone_ptr) ((map_ptr)->op->_clone(map_ptr, map_clone_ptr))
-#define hmap_next(map_ptr, iterator_ptr) ((map_ptr)->op->_next(map_ptr, iterator_ptr))
+#define hmap_resize(map_ptr, new_capacity)   ((map_ptr)->op->_resize(map_ptr, new_capacity))
+#define hmap_reserve(map_ptr, new_capacity)  ((map_ptr)->op->_reserve(map_ptr, new_capacity))
+#define hmap_try_shrink(map_ptr)             ((map_ptr)->op->_try_shrink(map_ptr))
+#define hmap_free(map_ptr)                   ((map_ptr)->op->_free(map_ptr))
+#define hmap_put(map_ptr, key, element)      ((map_ptr)->op->_put(map_ptr, key, element))
+#define hmap_get_or_null(map_ptr, key)       ((map_ptr)->op->_get_or_null(map_ptr, key))
+#define hmap_remove(map_ptr, key)            ((map_ptr)->op->_remove(map_ptr, key))
+#define hmap_contains(map_ptr, key)          ((map_ptr)->op->_contains(map_ptr, key))
+#define hmap_clear(map_ptr)                  ((map_ptr)->op->_clear(map_ptr))
+#define hmap_clone(map_ptr, map_clone_ptr)   ((map_ptr)->op->_clone(map_ptr, map_clone_ptr))
+#define hmap_next(map_ptr, iterator_ptr)     ((map_ptr)->op->_next(map_ptr, iterator_ptr))
 #define hmap_iterator(map_ptr, iterator_ptr) ((map_ptr)->op->_iterator(iterator_ptr))
 
 #ifdef HMAP_STRIP_PREFIXES
@@ -127,7 +127,7 @@ uint64_t fmix64(uint64_t x) {
 size_t nextPowerOfTwo(size_t n) {
     if (n == 0) return 1;
 
-    n--;
+    --n;
     n |= n >> 1;
     n |= n >> 2;
     n |= n >> 4;
@@ -233,18 +233,18 @@ typedef struct {                                                                
 } MAP_STRUCT_NAME##_iterator;                                                                                     \
                                                                                                                   \
 struct MAP_STRUCT_NAME##_operations {                                                                             \
-    void(*_resize)(MAP_STRUCT_NAME*, size_t);                                                                     \
-    void(*_reserve)(MAP_STRUCT_NAME*, size_t);                                                                    \
-    bool(*_try_shrink)(MAP_STRUCT_NAME*);                                                                         \
-    void(*_free)(MAP_STRUCT_NAME*);                                                                               \
-    void(*_put)(MAP_STRUCT_NAME*, KEY_T, VALUE_T);                                                                \
-    VALUE_T*(*_get_or_null)(MAP_STRUCT_NAME*, KEY_T);                                                             \
-    void(*_remove)(MAP_STRUCT_NAME*, KEY_T);                                                                      \
-    bool(*_contains)(MAP_STRUCT_NAME*, KEY_T);                                                                    \
-    void(*_clear)(MAP_STRUCT_NAME*);                                                                              \
-    MAP_STRUCT_NAME(*_clone)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME*);                                                 \
-    MAP_STRUCT_NAME##_entry*(*_next)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME##_iterator*);                              \
-    MAP_STRUCT_NAME##_iterator(*_iterator)(MAP_STRUCT_NAME##_iterator*);                                          \
+    void(*const _resize)(MAP_STRUCT_NAME*, size_t);                                                               \
+    void(*const _reserve)(MAP_STRUCT_NAME*, size_t);                                                              \
+    bool(*const _try_shrink)(MAP_STRUCT_NAME*);                                                                   \
+    void(*const _free)(MAP_STRUCT_NAME*);                                                                         \
+    void(*const _put)(MAP_STRUCT_NAME*, KEY_T, VALUE_T);                                                          \
+    VALUE_T*(*const _get_or_null)(MAP_STRUCT_NAME*, KEY_T);                                                       \
+    void(*const _remove)(MAP_STRUCT_NAME*, KEY_T);                                                                \
+    bool(*const _contains)(MAP_STRUCT_NAME*, KEY_T);                                                              \
+    void(*const _clear)(MAP_STRUCT_NAME*);                                                                        \
+    MAP_STRUCT_NAME(*const _clone)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME*);                                           \
+    MAP_STRUCT_NAME##_entry*(*const _next)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME##_iterator*);                        \
+    MAP_STRUCT_NAME##_iterator(*const _iterator)(MAP_STRUCT_NAME##_iterator*);                                    \
 };                                                                                                                \
                                                                                                                   \
 static void MAP_STRUCT_NAME##_init(MAP_STRUCT_NAME* map);                                                         \
@@ -474,18 +474,18 @@ static MAP_STRUCT_NAME##_entry* MAP_STRUCT_NAME##_next(MAP_STRUCT_NAME* map, MAP
 }                                                                                                                 \
                                                                                                                   \
 static MAP_STRUCT_NAME##_operations MAP_STRUCT_NAME##_op = (MAP_STRUCT_NAME##_operations) {                       \
-    ._resize = MAP_STRUCT_NAME##_resize,                                                                          \
-    ._reserve = MAP_STRUCT_NAME##_reserve,                                                                        \
-    ._try_shrink = MAP_STRUCT_NAME##_try_shrink,                                                                  \
-    ._free = MAP_STRUCT_NAME##_free,                                                                              \
-    ._put = MAP_STRUCT_NAME##_put,                                                                                \
+    ._resize      = MAP_STRUCT_NAME##_resize,                                                                     \
+    ._reserve     = MAP_STRUCT_NAME##_reserve,                                                                    \
+    ._try_shrink  = MAP_STRUCT_NAME##_try_shrink,                                                                 \
+    ._free        = MAP_STRUCT_NAME##_free,                                                                       \
+    ._put         = MAP_STRUCT_NAME##_put,                                                                        \
     ._get_or_null = MAP_STRUCT_NAME##_get_or_null,                                                                \
-    ._remove = MAP_STRUCT_NAME##_remove,                                                                          \
-    ._contains = MAP_STRUCT_NAME##_contains,                                                                      \
-    ._clear = MAP_STRUCT_NAME##_clear,                                                                            \
-    ._clone = MAP_STRUCT_NAME##_clone,                                                                            \
-    ._next = MAP_STRUCT_NAME##_next,                                                                              \
-    ._iterator = MAP_STRUCT_NAME##_iterator_init,                                                                 \
+    ._remove      = MAP_STRUCT_NAME##_remove,                                                                     \
+    ._contains    = MAP_STRUCT_NAME##_contains,                                                                   \
+    ._clear       = MAP_STRUCT_NAME##_clear,                                                                      \
+    ._clone       = MAP_STRUCT_NAME##_clone,                                                                      \
+    ._next        = MAP_STRUCT_NAME##_next,                                                                       \
+    ._iterator    = MAP_STRUCT_NAME##_iterator_init,                                                              \
 };                                                                                                                \
                                                                                                                   \
                                                                                                                   \
