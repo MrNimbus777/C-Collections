@@ -1,6 +1,6 @@
 # C-Collections
 
-A small collection of generic data structures implemented in C using macros
+A small collection of generic data structures implemented in C23 using macros
 to generate type-specific structures and functions.
 
 ---
