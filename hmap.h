@@ -43,6 +43,22 @@
 //
 // ####################################################################################################################
 
+// ####################################################################################################################
+// 11.06.2026 "SUGAR API" UPDATE
+// Now you can use runtime dispatched functions for all map operations.
+// You still need to explicitly initiate a map object before using those:
+//     int_to_string_hmap map;
+//     int_to_string_hmap_init(&map);
+// then you can use:
+//     hmap_put(&map, 0, "Hello");
+// or if you strip the prefixes:
+//     #define HMAP_STRIP_PREFIXES
+//     #include "hmap.h"
+// then you can simply write:
+//     put(&map, 0, "Hello");
+//
+// But surely I still recommend to use the explicit function calls, as it is less expensive than a runtime dispatch!
+// ####################################################################################################################
 
 
 #ifndef HMAP_H
@@ -55,15 +71,47 @@
 #include <limits.h> // needed for CHAR_BIT
 #include <assert.h>
 
+// THE SUGARY API:
+
+#define hmap_resize(map_ptr, new_capacity) ((map_ptr)->op->_resize(map_ptr, new_capacity))
+#define hmap_reserve(map_ptr, new_capacity) ((map_ptr)->op->_reserve(map_ptr, new_capacity))
+#define hmap_try_shrink(map_ptr) ((map_ptr)->op->_try_shrink(map_ptr))
+#define hmap_free(map_ptr) ((map_ptr)->op->_free(map_ptr))
+#define hmap_put(map_ptr, key, element) ((map_ptr)->op->_put(map_ptr, key, element))
+#define hmap_get_or_null(map_ptr, key) ((map_ptr)->op->_get_or_null(map_ptr, key))
+#define hmap_remove(map_ptr, key) ((map_ptr)->op->_remove(map_ptr, key))
+#define hmap_contains(map_ptr, key) ((map_ptr)->op->_contains(map_ptr, key))
+#define hmap_clear(map_ptr) ((map_ptr)->op->_clear(map_ptr))
+#define hmap_clone(map_ptr, map_clone_ptr) ((map_ptr)->op->_clone(map_ptr, map_clone_ptr))
+#define hmap_next(map_ptr, iterator_ptr) ((map_ptr)->op->_next(map_ptr, iterator_ptr))
+#define hmap_iterator(map_ptr, iterator_ptr) ((map_ptr)->op->_iterator(iterator_ptr))
+
+#ifdef HMAP_STRIP_PREFIXES
+
+#define resize(map_ptr, new_capacity)   hmap_resize(map_ptr, new_capacity)
+#define reserve(map_ptr, new_capacity)  hmap_reserve(map_ptr, new_capacity)
+#define try_shrink(map_ptr)             hmap_try_shrink(map_ptr)
+#define put(map_ptr, key, element)      hmap_put(map_ptr, key, element)
+#define get_or_null(map_ptr, key)       hmap_get_or_null(map_ptr, key)
+#define remove(map_ptr, key)            hmap_remove(map_ptr, key)
+#define contains(map_ptr, key)          hmap_contains(map_ptr, key)
+#define clear(map_ptr)                  hmap_clear(map_ptr)
+#define clone(map_ptr, map_clone_ptr)   hmap_clone(map_ptr, map_clone_ptr)
+#define next(map_ptr, iterator_ptr)     hmap_next(map_ptr, iterator_ptr)
+#define iterator(map_ptr, iterator_ptr) hmap_iterator(map_ptr, iterator_ptr)
+
+#endif
+
+// THE IMPLEMENTATION:
+
+#define HMAP_FOREACH(map_ptr, iterator_var_name) for(typeof(hmap_iterator(map_ptr, 0))iterator_var_name = {0}; hmap_next(map_ptr, &iterator_var_name);)
+
+
 typedef unsigned char byte;
 
-static const uint8_t SIZEOF_BITMAP = CHAR_BIT/2;
+#define SIZEOF_BITMAP (CHAR_BIT/2)
 
 #define LOAD_FACTOR 0.7
-
-
-#define HMAP_FOREACH(MAP_STRUCT_NAME, map_ptr, valid_iterator_ptr) for(MAP_STRUCT_NAME##_iterator_init(valid_iterator_ptr); MAP_STRUCT_NAME##_next(map_ptr, valid_iterator_ptr);)
-
 //
 //  You may use this function for generating hashes. 
 //
@@ -93,71 +141,71 @@ size_t nextPowerOfTwo(size_t n) {
 }
 
 // This macro is used to DECLARE the "hash" and "is_equal" functions related to keys. You must lately provide an DEFINITION (block of code) for these functions, in order to use the hash map!
-#define DECLARE_FUNCTIONS_FOR_KEY_T(KEY_T) uint64_t hash_##KEY_T (KEY_T key);                                     \
+#define DECLARE_FUNCTIONS_FOR_KEY_T(KEY_T) uint64_t hash_##KEY_T (KEY_T key); \
 bool is_equal_##KEY_T (KEY_T key1, KEY_T key2);
 
 
 //   #######################################################
 //          TECHNICAL MACRO, PLEASE DO NOT USE IT !!!
 //   #######################################################
-#define PUT_WITHOUT_SIZE_CHECK(map, k, v, KEY_T) do {                                                             \
-    size_t mask = map->capacity - 1;                                                                              \
-    size_t start = hash_##KEY_T(k) & mask;                                                                        \
-                                                                                                                  \
-    size_t first_deleted = SIZE_MAX;                                                                              \
-                                                                                                                  \
-    for (size_t probe = 0; probe < map->capacity; probe++) {                                                      \
-                                                                                                                  \
-        size_t pos = (start + probe) & mask;                                                                      \
-                                                                                                                  \
-        size_t byte_index = pos / SIZEOF_BITMAP;                                                                  \
-        uint8_t bit_index = (pos & (SIZEOF_BITMAP - 1)) << 1;                                                     \
-        uint8_t state = (map->bitmap[byte_index] >> bit_index) & 3;                                               \
-                                                                                                                  \
-                                                                                                                  \
-        if (state == 1) {                                                                                         \
-            if (is_equal_##KEY_T(map->elements[pos].key, k)) {                                                    \
-                map->elements[pos].value = v;                                                                     \
-                break;                                                                                            \
-            }                                                                                                     \
-        }                                                                                                         \
-        else if (state == 0) {                                                                                    \
-            if (first_deleted != -1)                                                                              \
-                pos = first_deleted;                                                                              \
-                                                                                                                  \
-            map->elements[pos].key = k;                                                                           \
-            map->elements[pos].value = v;                                                                         \
-                                                                                                                  \
-            size_t bi = pos / SIZEOF_BITMAP;                                                                      \
-            uint8_t bti = 2 * (pos & (SIZEOF_BITMAP - 1));                                                        \
-                                                                                                                  \
-            map->bitmap[bi] &= ~(3 << bti);                                                                       \
-            map->bitmap[bi] |= (1 << bti);                                                                        \
-                                                                                                                  \
-            map->size++;                                                                                          \
-            first_deleted = SIZE_MAX;                                                                             \
-            break;                                                                                                \
-        }                                                                                                         \
-        else if (state == 2) {                                                                                    \
-            if (first_deleted == SIZE_MAX)                                                                        \
-                first_deleted = pos;                                                                              \
-        }                                                                                                         \
-        else {                                                                                                    \
-            exit(EXIT_FAILURE);                                                                                   \
-        }                                                                                                         \
-    }                                                                                                             \
-    if(first_deleted != SIZE_MAX) {                                                                               \
-        map->elements[first_deleted].key = k;                                                                     \
-        map->elements[first_deleted].value = v;                                                                   \
-                                                                                                                  \
-        size_t bi = first_deleted / SIZEOF_BITMAP;                                                                \
-        uint8_t bti = 2 * (first_deleted & (SIZEOF_BITMAP - 1));                                                  \
-                                                                                                                  \
-        map->bitmap[bi] &= ~(3 << bti);                                                                           \
-        map->bitmap[bi] |= (1 << bti);                                                                            \
-                                                                                                                  \
-        map->size++;                                                                                              \
-    }                                                                                                             \
+#define _PUT_WITHOUT_SIZE_CHECK_(map, k, v, KEY_T) do {             \
+    size_t mask = map->capacity - 1;                                \
+    size_t start = hash_##KEY_T(k) & mask;                          \
+                                                                    \
+    size_t first_deleted = SIZE_MAX;                                \
+                                                                    \
+    for (size_t probe = 0; probe < map->capacity; probe++) {        \
+                                                                    \
+        size_t pos = (start + probe) & mask;                        \
+                                                                    \
+        size_t byte_index = pos / SIZEOF_BITMAP;                    \
+        uint8_t bit_index = (pos & (SIZEOF_BITMAP - 1)) << 1;       \
+        uint8_t state = (map->bitmap[byte_index] >> bit_index) & 3; \
+                                                                    \
+                                                                    \
+        if (state == 1) {                                           \
+            if (is_equal_##KEY_T(map->elements[pos].key, k)) {      \
+                map->elements[pos].value = v;                       \
+                break;                                              \
+            }                                                       \
+        }                                                           \
+        else if (state == 0) {                                      \
+            if (first_deleted != -1)                                \
+                pos = first_deleted;                                \
+                                                                    \
+            map->elements[pos].key = k;                             \
+            map->elements[pos].value = v;                           \
+                                                                    \
+            size_t bi = pos / SIZEOF_BITMAP;                        \
+            uint8_t bti = 2 * (pos & (SIZEOF_BITMAP - 1));          \
+                                                                    \
+            map->bitmap[bi] &= ~(3 << bti);                         \
+            map->bitmap[bi] |= (1 << bti);                          \
+                                                                    \
+            map->size++;                                            \
+            first_deleted = SIZE_MAX;                               \
+            break;                                                  \
+        }                                                           \
+        else if (state == 2) {                                      \
+            if (first_deleted == SIZE_MAX)                          \
+                first_deleted = pos;                                \
+        }                                                           \
+        else {                                                      \
+            exit(EXIT_FAILURE);                                     \
+        }                                                           \
+    }                                                               \
+    if(first_deleted != SIZE_MAX) {                                 \
+        map->elements[first_deleted].key = k;                       \
+        map->elements[first_deleted].value = v;                     \
+                                                                    \
+        size_t bi = first_deleted / SIZEOF_BITMAP;                  \
+        uint8_t bti = 2 * (first_deleted & (SIZEOF_BITMAP - 1));    \
+                                                                    \
+        map->bitmap[bi] &= ~(3 << bti);                             \
+        map->bitmap[bi] |= (1 << bti);                              \
+                                                                    \
+        map->size++;                                                \
+    }                                                               \
 } while(0)
 
 
@@ -169,11 +217,14 @@ typedef struct {                                                                
     VALUE_T value;                                                                                                \
 } MAP_STRUCT_NAME##_entry;                                                                                        \
                                                                                                                   \
+typedef struct MAP_STRUCT_NAME##_operations MAP_STRUCT_NAME##_operations;                                         \
+                                                                                                                  \
 typedef struct {                                                                                                  \
     MAP_STRUCT_NAME##_entry* elements;                                                                            \
     size_t capacity;                                                                                              \
     size_t size;                                                                                                  \
     byte* bitmap; /*each element maps to 2 bits: 00 - free, 01 - occupied, 10 - deleted, 11 - invalid*/           \
+    MAP_STRUCT_NAME##_operations* op;                                                                             \
 } MAP_STRUCT_NAME;                                                                                                \
                                                                                                                   \
 typedef struct {                                                                                                  \
@@ -181,27 +232,25 @@ typedef struct {                                                                
     size_t index;                                                                                                 \
 } MAP_STRUCT_NAME##_iterator;                                                                                     \
                                                                                                                   \
-static void MAP_STRUCT_NAME##_init(MAP_STRUCT_NAME* map) {                                                        \
-    assert(map != NULL && "A valid map is expected");                                                             \
-    map->elements = (MAP_STRUCT_NAME##_entry*)malloc(4 * sizeof(MAP_STRUCT_NAME##_entry));                        \
-    if (!map->elements) exit(EXIT_FAILURE);                                                                       \
-    map->bitmap = (byte*)calloc(1, sizeof(byte));                                                                 \
-    if (!map->bitmap) exit(EXIT_FAILURE);                                                                         \
-    map->size = 0;                                                                                                \
-    map->capacity = 4;                                                                                            \
-}                                                                                                                 \
+struct MAP_STRUCT_NAME##_operations {                                                                             \
+    void(*_resize)(MAP_STRUCT_NAME*, size_t);                                                                     \
+    void(*_reserve)(MAP_STRUCT_NAME*, size_t);                                                                    \
+    bool(*_try_shrink)(MAP_STRUCT_NAME*);                                                                         \
+    void(*_free)(MAP_STRUCT_NAME*);                                                                               \
+    void(*_put)(MAP_STRUCT_NAME*, KEY_T, VALUE_T);                                                                \
+    VALUE_T*(*_get_or_null)(MAP_STRUCT_NAME*, KEY_T);                                                             \
+    void(*_remove)(MAP_STRUCT_NAME*, KEY_T);                                                                      \
+    bool(*_contains)(MAP_STRUCT_NAME*, KEY_T);                                                                    \
+    void(*_clear)(MAP_STRUCT_NAME*);                                                                              \
+    MAP_STRUCT_NAME(*_clone)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME*);                                                 \
+    MAP_STRUCT_NAME##_entry*(*_next)(MAP_STRUCT_NAME*, MAP_STRUCT_NAME##_iterator*);                              \
+    MAP_STRUCT_NAME##_iterator(*_iterator)(MAP_STRUCT_NAME##_iterator*);                                          \
+};                                                                                                                \
+                                                                                                                  \
+static void MAP_STRUCT_NAME##_init(MAP_STRUCT_NAME* map);                                                         \
                                                                                                                   \
 /* capacity must be a power of 2 */                                                                               \
-static void MAP_STRUCT_NAME##_init_with_capacity(MAP_STRUCT_NAME* map, size_t capacity) {                         \
-    assert(map != NULL && "A valid map is expected");                                                             \
-    assert(capacity != 0 && (capacity & (capacity - 1)) == 0 && "capacity must be a power of 2");                 \
-    map->elements = (MAP_STRUCT_NAME##_entry*)malloc(capacity * sizeof(MAP_STRUCT_NAME##_entry));                 \
-    if (!map->elements) exit(EXIT_FAILURE);                                                                       \
-    map->bitmap = (byte*)calloc((capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP, sizeof(byte));                    \
-    if (!map->bitmap) exit(EXIT_FAILURE);                                                                         \
-    map->size = 0;                                                                                                \
-    map->capacity = capacity;                                                                                     \
-}                                                                                                                 \
+static void MAP_STRUCT_NAME##_init_with_capacity(MAP_STRUCT_NAME* map, size_t capacity);                          \
                                                                                                                   \
 /* capacity must be a power of 2 */                                                                               \
 static void MAP_STRUCT_NAME##_resize(MAP_STRUCT_NAME* map, size_t new_capacity) {                                 \
@@ -234,7 +283,7 @@ static void MAP_STRUCT_NAME##_resize(MAP_STRUCT_NAME* map, size_t new_capacity) 
         if (state == 1) {                                                                                         \
             KEY_T k = old_elements[i].key;                                                                        \
             VALUE_T v = old_elements[i].value;                                                                    \
-            PUT_WITHOUT_SIZE_CHECK(map, k, v, KEY_T);                                                             \
+            _PUT_WITHOUT_SIZE_CHECK_(map, k, v, KEY_T);                                                           \
         }                                                                                                         \
     }                                                                                                             \
                                                                                                                   \
@@ -272,7 +321,7 @@ static void MAP_STRUCT_NAME##_put(MAP_STRUCT_NAME* map, KEY_T key, VALUE_T value
     if (map->size >= (size_t)(map->capacity * LOAD_FACTOR)) {                                                     \
         MAP_STRUCT_NAME##_resize(map, map->capacity * 2);                                                         \
     }                                                                                                             \
-    PUT_WITHOUT_SIZE_CHECK(map, key, value, KEY_T);                                                               \
+    _PUT_WITHOUT_SIZE_CHECK_(map, key, value, KEY_T);                                                             \
 }                                                                                                                 \
                                                                                                                   \
 static VALUE_T* MAP_STRUCT_NAME##_get_or_null(MAP_STRUCT_NAME* map, KEY_T key) {                                  \
@@ -372,31 +421,32 @@ static MAP_STRUCT_NAME MAP_STRUCT_NAME##_clone(MAP_STRUCT_NAME* map1, MAP_STRUCT
     assert(map1 != NULL && "A valid map is expected");                                                            \
     if(map2 == NULL) {                                                                                            \
         MAP_STRUCT_NAME map2;                                                                                     \
+        MAP_STRUCT_NAME##_init_with_capacity(&map2, map1->capacity);                                              \
         if(map1->size == 0) {                                                                                     \
-            MAP_STRUCT_NAME##_init(map2);                                                                         \
+            MAP_STRUCT_NAME##_init(&map2);                                                                        \
             return map2;                                                                                          \
         }                                                                                                         \
-        MAP_STRUCT_NAME##_init_with_capacity(&map2, map1->capacity);                                              \
         map2.size = map1->size;                                                                                   \
         mempcpy(map2.bitmap, map1->bitmap, (map1->capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP);                 \
         mempcpy(map2.elements, map1->elements, map1->capacity * sizeof(MAP_STRUCT_NAME##_entry));                 \
         return map2;                                                                                              \
     }                                                                                                             \
+    MAP_STRUCT_NAME##_init_with_capacity(map2, map1->capacity);                                                   \
     if(map1->size == 0) {                                                                                         \
         MAP_STRUCT_NAME##_init(map2);                                                                             \
-        return;                                                                                                   \
+        return *map2;                                                                                             \
     }                                                                                                             \
-    MAP_STRUCT_NAME##_init_with_capacity(map2, map1->capacity);                                                   \
     map2->size = map1->size;                                                                                      \
     mempcpy(map2->bitmap, map1->bitmap, (map1->capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP);                    \
     mempcpy(map2->elements, map1->elements, map1->capacity * sizeof(MAP_STRUCT_NAME##_entry));                    \
     return *map2;                                                                                                 \
 }                                                                                                                 \
                                                                                                                   \
-static void MAP_STRUCT_NAME##_iterator_init(MAP_STRUCT_NAME##_iterator* it) {                                     \
+static MAP_STRUCT_NAME##_iterator MAP_STRUCT_NAME##_iterator_init(MAP_STRUCT_NAME##_iterator* it) {               \
     assert(it != NULL && "A valid iterator is expected");                                                         \
     it->entry = NULL;                                                                                             \
     it->index = 0;                                                                                                \
+    return *it;                                                                                                   \
 }                                                                                                                 \
                                                                                                                   \
 static MAP_STRUCT_NAME##_entry* MAP_STRUCT_NAME##_next(MAP_STRUCT_NAME* map, MAP_STRUCT_NAME##_iterator* it){     \
@@ -422,6 +472,47 @@ static MAP_STRUCT_NAME##_entry* MAP_STRUCT_NAME##_next(MAP_STRUCT_NAME* map, MAP
     }                                                                                                             \
     return NULL;                                                                                                  \
 }                                                                                                                 \
+                                                                                                                  \
+static MAP_STRUCT_NAME##_operations MAP_STRUCT_NAME##_op = (MAP_STRUCT_NAME##_operations) {                       \
+    ._resize = MAP_STRUCT_NAME##_resize,                                                                          \
+    ._reserve = MAP_STRUCT_NAME##_reserve,                                                                        \
+    ._try_shrink = MAP_STRUCT_NAME##_try_shrink,                                                                  \
+    ._free = MAP_STRUCT_NAME##_free,                                                                              \
+    ._put = MAP_STRUCT_NAME##_put,                                                                                \
+    ._get_or_null = MAP_STRUCT_NAME##_get_or_null,                                                                \
+    ._remove = MAP_STRUCT_NAME##_remove,                                                                          \
+    ._contains = MAP_STRUCT_NAME##_contains,                                                                      \
+    ._clear = MAP_STRUCT_NAME##_clear,                                                                            \
+    ._clone = MAP_STRUCT_NAME##_clone,                                                                            \
+    ._next = MAP_STRUCT_NAME##_next,                                                                              \
+    ._iterator = MAP_STRUCT_NAME##_iterator_init,                                                                 \
+};                                                                                                                \
+                                                                                                                  \
+                                                                                                                  \
+                                                                                                                  \
+static void MAP_STRUCT_NAME##_init(MAP_STRUCT_NAME* map) {                                                        \
+    assert(map != NULL && "A valid map is expected");                                                             \
+    map->elements = (MAP_STRUCT_NAME##_entry*)malloc(4 * sizeof(MAP_STRUCT_NAME##_entry));                        \
+    if (!map->elements) exit(EXIT_FAILURE);                                                                       \
+    map->bitmap = (byte*)calloc(1, sizeof(byte));                                                                 \
+    if (!map->bitmap) exit(EXIT_FAILURE);                                                                         \
+    map->size = 0;                                                                                                \
+    map->capacity = 4;                                                                                            \
+    map->op = &MAP_STRUCT_NAME##_op;                                                                              \
+}                                                                                                                 \
+                                                                                                                  \
+/* capacity must be a power of 2 */                                                                               \
+static void MAP_STRUCT_NAME##_init_with_capacity(MAP_STRUCT_NAME* map, size_t capacity) {                         \
+    assert(map != NULL && "A valid map is expected");                                                             \
+    assert(capacity != 0 && (capacity & (capacity - 1)) == 0 && "capacity must be a power of 2");                 \
+    map->elements = (MAP_STRUCT_NAME##_entry*)malloc(capacity * sizeof(MAP_STRUCT_NAME##_entry));                 \
+    if (!map->elements) exit(EXIT_FAILURE);                                                                       \
+    map->bitmap = (byte*)calloc((capacity + SIZEOF_BITMAP - 1) / SIZEOF_BITMAP, sizeof(byte));                    \
+    if (!map->bitmap) exit(EXIT_FAILURE);                                                                         \
+    map->size = 0;                                                                                                \
+    map->capacity = capacity;                                                                                     \
+    map->op = &MAP_STRUCT_NAME##_op;                                                                              \
+}  
 
 // KEY_T, VALUE_T: for pointers provide a wrapping type (e.g. char* -> typedef char* my_string)
 #define HMAP_IMPLEMENT(KEY_T, VALUE_T) HMAP_IMPLEMENT_EXPLICIT(KEY_T, VALUE_T, KEY_T##_to_##VALUE_T##_hmap)
