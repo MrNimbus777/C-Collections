@@ -37,6 +37,31 @@ int main() {
 }
 ```
 ---
+### [hmap.h](https://github.com/MrNimbus777/C-Collections/blob/main/hmap.h) (Hash Map)
+
+Implementation of a generic hash map in C using a macro for creating the set of functions tied to a KET TYPE -> VALUE TYPE.
+
+#### Example
+
+```c
+typedef char* string;
+
+DECLARE_FUNCTIONS_FOR_KEY_T(int)
+bool is_equal_int(int i1, int i2){ return i1 == i2; }
+uint64_t hash_int(int i){ return fmix64(i); }
+
+HMAP_IMPLEMENT(int, string)
+
+int main() {
+    int_to_string_hmap map;
+    int_to_string_hmap_init(&map);
+    put(&map, 69, "Six Nine");
+    printf("%s\n", *get_or_null(&map, 69));
+    clear(&map);   // very important to free the array to prevent memory leaks
+    return 0;
+}
+```
+---
 ### [llist.h](https://github.com/MrNimbus777/C-Collections/blob/main/llist.h) (Single Linked List)
 
 Implementation of a generic single linked list in C using a macro for creating the set of function tied to a TYPE.
@@ -61,28 +86,4 @@ int main() {
     return 0;
 }
 ```
----
-### [hmap.h](https://github.com/MrNimbus777/C-Collections/blob/main/hmap.h) (Hash Map)
 
-Implementation of a generic hash map in C using a macro for creating the set of functions tied to a KET TYPE -> VALUE TYPE.
-
-#### Example
-
-```c
-typedef char* string;
-
-DECLARE_FUNCTIONS_FOR_KEY_T(int)
-bool is_equal_int(int i1, int i2){ return i1 == i2; }
-uint64_t hash_int(int i){ return fmix64(i); }
-
-HMAP_IMPLEMENT(int, string)
-
-int main() {
-    int_to_string_hmap map;
-    int_to_string_hmap_init(&map);
-    int_to_string_hmap_put(&map, 69, "Six Nine");
-    printf("%s\n", *int_to_string_hmap_get_or_null(&map, 69));
-    int_to_string_hmap_clear(&map);   // very important to free the array to prevent memory leaks
-    return 0;
-}
-```
