@@ -105,7 +105,7 @@ typedef struct darr_error_t {
 #define STR(x) STR_(x)
 
 #define darr_err(code_, string_literal, func) ((darr_error_t){.message = (__FILE__"(line: "STR(__LINE__)") in "STR(func)"(...): "string_literal), .code = (code_)})
-inline darr_error_t darr_ok() { return (darr_error_t){.message = 0, .code = DARR_OK}; }
+static inline darr_error_t darr_ok() { return (darr_error_t){.message = 0, .code = DARR_OK}; }
 
 #define INITIAL_CAPACITY 4
 
