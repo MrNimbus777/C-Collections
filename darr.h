@@ -237,7 +237,7 @@ static bool ARR_STRUCT_NAME##_resize(ARR_STRUCT_NAME* arr, size_t new_capacity, 
     assert(new_capacity > arr->size && "new_capacity cannot be smaller than actual size");                                \
     TYPE* tmp = (TYPE*)realloc(arr->elements, new_capacity * sizeof(TYPE));                                               \
     if(!tmp) {                                                                                                            \
-        *out_error = darr_err(DARR_ALLOC, "Failed to realloc(arr->elements)", ARR_STRUCT_NAME##_try_shrink);              \
+        *out_error = darr_err(DARR_ALLOC, "Failed to realloc(arr->elements)", ARR_STRUCT_NAME##_resize);                  \
         return false;                                                                                                     \
     }                                                                                                                     \
     arr->elements = tmp;                                                                                                  \
@@ -296,5 +296,6 @@ static void ARR_STRUCT_NAME##_init_with_capacity(ARR_STRUCT_NAME* arr, size_t in
 
 
 #define DARR_IMPLEMENT(TYPE) DARR_IMPLEMENT_EXPLICIT(TYPE, TYPE##_darr)
+
 
 #endif
