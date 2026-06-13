@@ -54,6 +54,8 @@ HMAP_IMPLEMENT(int, string)
 
 int main() {
     int_to_string_hmap map;
+
+    hmap_error_t err;
     int_to_string_hmap_init(&map);
     put(&map, 69, "Six Nine");
     printf("%s\n", *get_or_null(&map, 69));
