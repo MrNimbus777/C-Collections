@@ -14,19 +14,25 @@ similar structure seen in Tsoding's video: <a href="https://www.youtube.com/watc
 
 ```c
 #include <stdio.h>
+
+#define DARR_STRIP_PREFIXES
 #include "darr.h"
 
 DARR_IMPLEMENT(int)
 
 int main() {
     int_darr ints;
-
     int_darr_init(&ints);
-    int_darr_push(&ints, 69);
 
-    printf("%d\n", int_darr_pop(&ints));
+    darr_error_t err;
 
-    int_darr_free(&ints);   // very important to free the array to prevent memory leaks
+    push(&ints, 69, &err);
+    if(err.code != DARR_OK){
+        printf("%s\n", err.message);
+        return 1;
+    }
+    printf("%d", pop(&ints));
+    darr_free(&ints);   // very important to free the array to prevent memory leaks
     return 0;
 }
 ```
@@ -51,7 +57,7 @@ int main() {
 
     printf("%d\n", int_llist_pop(&list));
 
-    int_llist_clear(&list);   // important to clear the list to prevent memory leaks
+    int_llist_clear(&list);   // very important to free the array to prevent memory leaks
     return 0;
 }
 ```
@@ -76,7 +82,7 @@ int main() {
     int_to_string_hmap_init(&map);
     int_to_string_hmap_put(&map, 69, "Six Nine");
     printf("%s\n", *int_to_string_hmap_get_or_null(&map, 69));
-    int_to_string_hmap_clear(&map);  // very important to clear the elements to prevent memory leaks!
+    int_to_string_hmap_clear(&map);   // very important to free the array to prevent memory leaks
     return 0;
 }
 ```
