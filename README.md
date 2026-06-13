@@ -56,9 +56,14 @@ int main() {
     int_to_string_hmap map;
 
     hmap_error_t err;
-    int_to_string_hmap_init(&map);
-    put(&map, 69, "Six Nine");
-    printf("%s\n", *get_or_null(&map, 69));
+    
+    int_to_string_hmap_init(&map, &err);
+    if(err.code != HMAP_OK) {
+        fprintf(stderr, "%s\n", err.message);
+        return err.code;
+    }
+    put(&map, 69, "Six Nine", &err);
+    printf("%s\n", *get_or_null(&map, 69, &err));
     clear(&map);   // very important to free the array to prevent memory leaks
     return 0;
 }
